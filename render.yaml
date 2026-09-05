@@ -1,0 +1,38 @@
+services:
+  # 1. Backend Web Service (FastAPI)
+  - type: web
+    name: fintech-fraud-backend
+    env: python
+    region: ohio
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: DATABASE_URL
+        sync: false # Set in Render Dashboard with your Neon connection string
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false # Set in Render Dashboard with your Aiven Kafka host:port
+      - key: KAFKA_TOPIC
+        value: fintech.transactions
+      - key: KAFKA_SECURITY_PROTOCOL
+        value: SSL
+
+  # 2. Frontend Static Site (React + Vite)
+  - type: web
+    name: fintech-fraud-dashboard
+    env: static
+    region: ohio
+    plan: free
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Set to your deployed backend Render URL, e.g. https://fintech-fraud-backend.onrender.com
